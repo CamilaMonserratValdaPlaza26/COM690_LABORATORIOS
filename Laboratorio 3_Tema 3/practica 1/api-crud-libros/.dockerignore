@@ -1,0 +1,19 @@
+# Aqui se excluyen las dependencias locales, que sirve para no copiarlas al contenedor
+node_modules
+npm-debug.log*
+
+# Aqui se excluye el .git, que sirve para enviar menos datos en el build
+.git
+.gitignore
+
+# Aqui se excluye el .env, que sirve porque las variables se inyectan al contenedor
+# desde docker-compose y no deben quedar dentro de la imagen
+.env
+
+# Aqui se excluyen los archivos de orquestacion, que sirven solo del lado del host
+Dockerfile
+docker-compose.yml
+docker-compose.dev.yml
+
+# Aqui se excluye el init.sql, que sirve porque se monta como volumen en Postgres
+init.sql

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Biblioteca - Catalogo de libros</title>
+<style>
+  * { box-sizing: border-box; font-family: Georgia, 'Times New Roman', serif; }
+  body { margin: 0; background: #faf7f0; color: #2b2118; }
+  header { background: #2b2118; color: #f5ead6; padding: 26px 20px; text-align: center; border-bottom: 4px solid #c9a227; }
+  header h1 { margin: 0; font-size: 2rem; letter-spacing: .02em; }
+  header p { margin: 6px 0 0; opacity: .8; font-family: Arial, sans-serif; font-size: .92rem; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 18px 18px 60px; font-family: Arial, sans-serif; }
+  .panel { background: #fff; border: 1px solid #e5dcc8; border-radius: 12px; padding: 14px; margin: 14px 0; box-shadow: 0 2px 10px #0001; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  input, select, button { border-radius: 8px; border: 1px solid #d8cdb4; padding: 10px 12px; font-family: Arial, sans-serif; }
+  input, select { flex: 1; min-width: 150px; background: #fffdf8; color: #2b2118; }
+  button { cursor: pointer; background: #2b2118; color: #f5ead6; border: none; font-weight: 700; }
+  button.sec { background: #efe6d2; color: #2b2118; border: 1px solid #d8cdb4; }
+  button.del { background: #9c2b2b; color: #fff; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-top: 12px; }
+  .card { background: #fff; border: 1px solid #e5dcc8; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+  .card img { width: 100%; height: 280px; object-fit: cover; background: #eee5d3; display: block; }
+  .card .body { padding: 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .card .t { font-family: Georgia, serif; font-weight: 700; font-size: 1.02rem; }
+  .card .m { font-size: .85rem; color: #6b5d4d; }
+  .pill { display: inline-block; font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-top: 4px; }
+  .ok { background: #e6f4ea; color: #1e7e34; border: 1px solid #b7dfc0; }
+  .no { background: #fdecea; color: #9c2b2b; border: 1px solid #f5c6c0; }
+  .actions { display: flex; gap: 8px; margin-top: 10px; }
+  .actions button { flex: 1; padding: 8px; font-size: .85rem; }
+  #form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+  #form .full { grid-column: 1 / -1; }
+  small.hint { color: #6b5d4d; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Biblioteca Central</h1>
+  <p>Catalogo con persistencia en Postgres y hot reload con Docker Compose</p>
+</header>
+<div class="wrap">
+  <div class="panel">
+    <div class="row">
+      <input id="q" placeholder="Buscar por titulo..." />
+      <select id="fCat"><option value="">Todas las categorias</option></select>
+      <select id="fDisp"><option value="">Disponibles y prestados</option><option value="true">Solo disponibles</option><option value="false">Solo prestados</option></select>
+      <button onclick="cargar()">Filtrar</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3 style="margin:0 0 10px">Agregar / Editar libro</h3>
+    <div id="form">
+      <input id="titulo" placeholder="Titulo *" />
+      <select id="autorId"><option value="">Autor *</option></select>
+      <select id="categoriaId"><option value="">Categoria *</option></select>
+      <input id="anio" type="number" placeholder="Anio (ej: 1967)" />
+      <select id="disponible"><option value="true">Disponible</option><option value="false">Prestado</option></select>
+      <input id="portada" class="full" placeholder="URL de portada (opcional, se usa una de internet por defecto)" />
+      <button class="full" onclick="guardar()">Guardar libro</button>
+    </div>
+    <small class="hint">Los campos con * son obligatorios. Para editar usa el boton Editar de una tarjeta.</small>
+  </div>
+
+  <div id="grid" class="grid"></div>
+</div>
+<script>
+const FALLBACK = 'https://placehold.co/400x560?text=Sin+portada';
+let editId = null;
+
+async function init() {
+  const [a, c] = await Promise.all([fetch('/autores').then(r => r.json()), fetch('/categorias').then(r => r.json())]);
+  autorId.innerHTML = '<option value="">Autor *</option>' + a.map(x => `<option value="${x.id}">${x.nombre}</option>`).join('');
+  categoriaId.innerHTML = '<option value="">Categoria *</option>' + c.map(x => `<option value="${x.id}">${x.nombre}</option>`).join('');
+  fCat.innerHTML = '<option value="">Todas las categorias</option>' + c.map(x => `<option value="${x.id}">${x.nombre}</option>`).join('');
+  cargar();
+}
+
+async function cargar() {
+  const params = new URLSearchParams();
+  if (q.value) params.set('search', q.value);
+  if (fCat.value) params.set('categoriaId', fCat.value);
+  if (fDisp.value) params.set('disponible', fDisp.value);
+  const r = await fetch('/libros?' + params.toString());
+  const { data } = await r.json();
+  grid.innerHTML = data.map(l => `
+    <div class="card">
+      <img src="${l.portada || FALLBACK}" onerror="this.src='${FALLBACK}'" alt="Portada de ${l.titulo}" loading="lazy" />
+      <div class="body">
+        <div class="t">${l.titulo}</div>
+        <div class="m">${l.autor} - ${l.categoria} - ${l.anio || 'S/A'}</div>
+        <div><span class="pill ${l.disponible ? 'ok' : 'no'}">${l.disponible ? 'Disponible' : 'Prestado'}</span></div>
+        <div class="actions">
+          <button class="sec" onclick='editar(${JSON.stringify(l)})'>Editar</button>
+          <button class="del" onclick="borrar(${l.id})">Eliminar</button>
+        </div>
+      </div>
+    </div>`).join('') || '<p>Sin libros. Agrega el primero.</p>';
+}
+
+function editar(l) {
+  editId = l.id;
+  titulo.value = l.titulo; autorId.value = l.autorId; categoriaId.value = l.categoriaId;
+  anio.value = l.anio || ''; disponible.value = String(l.disponible); portada.value = l.portada || '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function guardar() {
+  const body = {
+    titulo: titulo.value,
+    autorId: autorId.value ? +autorId.value : null,
+    categoriaId: categoriaId.value ? +categoriaId.value : null,
+    anio: anio.value ? +anio.value : null,
+    disponible: disponible.value === 'true',
+    portada: portada.value || null
+  };
+  const url = editId ? '/libros/' + editId : '/libros';
+  const r = await fetch(url, { method: editId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!r.ok) { alert('Error: ' + JSON.stringify(await r.json())); return; }
+  editId = null;
+  titulo.value = ''; autorId.value = ''; categoriaId.value = ''; anio.value = ''; portada.value = ''; disponible.value = 'true';
+  cargar();
+}
+
+async function borrar(id) {
+  if (!confirm('Eliminar este libro?')) return;
+  await fetch('/libros/' + id, { method: 'DELETE' });
+  cargar();
+}
+
+init();
+</script>
+</body>
+</html>

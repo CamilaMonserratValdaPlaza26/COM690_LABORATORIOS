@@ -1,0 +1,33 @@
+# Aqui se define produccion, que sirve para desplegar sin hot reload
+services:
+  api:
+    # Aqui se construye desde el Dockerfile, que sirve para crear la imagen de la API
+    build: .
+    # Aqui se publica el 3000, que sirve para entrar desde el navegador
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+    # Aqui se declara la dependencia, que sirve para arrancar la DB primero
+    depends_on:
+      - db
+
+  db:
+    # Aqui se usa Postgres 16, que sirve para la persistencia
+    image: postgres:16.4
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: dblibros
+    volumes:
+      # Aqui se monta init.sql, que sirve para crear las tablas la primera vez
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # Aqui se usa volumen con nombre, que sirve para no perder los datos
+      - pgsql-libdata:/var/lib/postgresql/data
+
+volumes:
+  pgsql-libdata:

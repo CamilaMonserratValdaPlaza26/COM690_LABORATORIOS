@@ -1,0 +1,18 @@
+# Aqui se define desarrollo, que sirve para programar con hot reload
+# Este archivo NO repite la configuracion: la hereda del archivo de produccion
+# con la clave `include`, y solo sobrescribe lo propio del modo desarrollo
+include:
+  - docker-compose.yml
+
+services:
+  api:
+    # Aqui se reemplaza el arranque de produccion (node app.js) por nodemon
+    command: ["nodemon", "--legacy-watch", "app.js"]
+    # Aqui se activa el polling, que sirve para detectar cambios en Windows
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    # Aqui se monta la carpeta local, que sirve para ver los cambios al instante
+    volumes:
+      - .:/app
+      # Aqui se protege node_modules, que sirve para no borrar lo instalado
+      - /app/node_modules

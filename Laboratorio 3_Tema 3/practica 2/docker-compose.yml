@@ -1,0 +1,38 @@
+# Aqui se define el blog, que sirve para la Practica 2 con doble volumen
+services:
+  db:
+    # Aqui se usa MySQL, que sirve como base de datos del blog
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password123
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: password123
+    volumes:
+      # Aqui se monta db_data, que sirve para guardar la base aunque se bajen los contenedores
+      - db_data:/var/lib/mysql
+
+  wordpress:
+    # Aqui se usa WordPress, que sirve como el blog
+    image: wordpress:latest
+    restart: always
+    # Aqui se declara la dependencia, que sirve para arrancar la DB primero
+    depends_on:
+      - db
+    ports:
+      # Aqui se publica el 8080, que sirve para entrar al blog desde el navegador
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: password123
+    volumes:
+      # Aqui se monta wordpress_data, que sirve para guardar temas, plugins e imagenes
+      - wordpress_data:/var/www/html
+
+# Aqui se definen los dos volumenes, que sirve para la persistencia doble
+volumes:
+  db_data:
+  wordpress_data:

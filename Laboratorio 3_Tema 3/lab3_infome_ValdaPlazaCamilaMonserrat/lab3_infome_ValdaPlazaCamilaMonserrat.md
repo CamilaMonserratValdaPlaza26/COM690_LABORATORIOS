@@ -32,8 +32,6 @@ En este laboratorio se pasó de ejecutar un único contenedor aislado a diseñar
 
 Todo lo que se muestra a continuación es real: cada figura es una captura de pantalla del equipo, tomada durante la ejecución, y los archivos citados se encuentran en las carpetas `ejercicio1` … `ejercicio6`, `practica 1` y `practica 2`.
 
-El informe está redactado en tercera persona, emplea listas de viñetas en lugar de tablas y explica las configuraciones mediante descripción, evitando bloques de código que alargan el documento.
-
 ---
 
 # Ejercicio 3.1: Aplicación web simple con un contenedor (Nginx)

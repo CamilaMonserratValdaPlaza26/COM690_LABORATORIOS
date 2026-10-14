@@ -33,7 +33,7 @@ Todo el trabajo se realizó en Windows con Docker Desktop, usando la terminal Wa
 
 ## 2. Objetivos
 
-Al finalizar el laboratorio el estudiante es capaz de:
+Al finalizar el laboratorio se aprendió:
 
 1. Aplicar volúmenes de Docker para la persistencia de datos y el desarrollo con hot reload.
 2. Crear y gestionar redes personalizadas de Docker para la comunicación entre servicios.
@@ -401,8 +401,8 @@ docker run -d --network red-nube-usfx --name mariadb-blog -v vol-db-datos:/var/l
 Para comprobar que esta configuración no solo se aplicó sino que surte efecto, se encendió el contenedor ya existente y se consultó el estado real del servidor. Al momento de la verificación los contenedores estaban detenidos pero no eliminados, por lo que bastó encender MariaDB con el comando docker start; la red y los volúmenes nunca se perdieron. Para comprobarlo primero se verificó el estado de los contenedores con docker ps -a, y en la columna STATUS aparecieron como Exited, que significa detenidos pero conservados.
 
 docker start mariadb-blog
-    docker exec -it mariadb-blog bash
-    mariadb -u root -p
+docker exec -it mariadb-blog bash
+mariadb -u root -p
 
 A continuación se explica cada uno de estos comandos:
 
@@ -434,8 +434,8 @@ Las tres filas se guardaron y se recuperaron correctamente, con todos los emojis
 
 Para demostrar por qué utf8mb4 era necesario, se creó una tabla con la codificación antigua y se intentó guardar el mismo emoji:
 
-    CREATE TABLE texto_viejo (contenido VARCHAR(20)) CHARACTER SET utf8mb3;
-    INSERT INTO texto_viejo (contenido) VALUES ('Bienvenidos 🎉');
+CREATE TABLE texto_viejo (contenido VARCHAR(20)) CHARACTER SET utf8mb3;
+INSERT INTO texto_viejo (contenido) VALUES ('Bienvenidos 🎉');
 
 MariaDB rechazó la inserción con el error 1366, indicando que el valor de cadena es incorrecto para esa columna. La causa es el tamaño en memoria: un emoji necesita 4 bytes en UTF-8, mientras que utf8mb3 solo admite 3 bytes por carácter. Por eso utf8mb4, que significa el máximo de 4 bytes, es el único que admite emojis; los acentos, la letra ñ y el corazón sí caben en utf8mb3, porque ocupan menos bytes.
 
